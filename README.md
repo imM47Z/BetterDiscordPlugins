@@ -1,2 +1,2 @@
 # BetterDiscordPlugins
-A repo where i share some plugins that i've update and create.
+A repo where i share some plugins that i update and create.
