@@ -1,137 +1,125 @@
-//META { "name": "QuickDeleteMessages" } *//
-global.QuickDeleteMessages = function () {
-    var EndpointMessages,
-    MessagePrompts,
-    Permissions,
-    UserStore,
-    _qualifies,
-    getOwnerInstance,
-    gotDeletePermission,
-    onClick,
-    settings;
-	
-	const keysBeingPressed = [];
+/**
+    * @name QuickDeleteMessages
+    * @author M47Z
+    * @description This plugin allows you to delete messages by pressing delete button.
+    * @version 1.0.0
+    * @source https://github.com/IamM47Z/BetterDiscordPlugins/blob/master/QuickDeleteMessages.plugin.js
+    * @updateUrl https://gitcdn.link/repo/IamM47Z/BetterDiscordPlugins/master/QuickDeleteMessages.plugin.js
+    */
 
-    class QuickDeleteMessages {
-        getName() {
-            return "Quick Delete Messages";
+module.exports = (_ => {
+    const config = {
+        "info": {
+            "name": "QuickDeleteMessages",
+            "author": "M47Z",
+            "version": "1.0.0",
+            "description": "This plugin allows you to delete messages by pressing delete button."
         }
-
-        getDescription() {
-            return "Hold Delete and click a Message to delete it.";
-        }
-
-        getAuthor() {
-            return "square updated by M47Z";
-        }
-
-        getVersion() {
-            return "2.0.0";
-        }
-
-        async start() {
-            var ref;
-            settings.confirm = (ref = BdApi.getData("QuickDeleteMessagesData", "confirm")) != null ? ref : false;
-            if (UserStore == null)
-                UserStore = BdApi.findModuleByProps("getCurrentUser");
-			
-            if (Permissions == null)
-                Permissions = BdApi.findModuleByProps("computePermissions");
-			
-            if (EndpointMessages == null)
-                EndpointMessages = BdApi.findModuleByProps("deleteMessage");
-			
-            if (MessagePrompts == null)
-                MessagePrompts = BdApi.findModuleByProps("confirmDelete");
-
-            window.addEventListener('keyup', (e) =>	keysBeingPressed.splice( keysBeingPressed.indexOf(e.key), 1 ) );
-            window.addEventListener('keydown', (e) => {
-				if ( keysBeingPressed.indexOf( e.key ) > -1 )
-					return;
-				
-				keysBeingPressed[ keysBeingPressed.length ] = e.key;
-			});
-            return document.addEventListener("click", onClick, true);
-        }
-
-        stop() {
-            window.removeEventListener('keyup', (e) =>	keysBeingPressed.splice( keysBeingPressed.indexOf(e.key), 1 ) , true);
-            window.removeEventListener('keydown', (e) => {
-				if ( keysBeingPressed.indexOf( e.key ) > -1 )
-					return;
-				
-				keysBeingPressed[ keysBeingPressed.length ] = e.key;
-			}, true);
-            return document.removeEventListener("click", onClick, true);
-        }
-
-        getSettingsPanel() {
-            return `<label style="color: #87909C"><input type="checkbox" name="confirm" onChange="QuickDeleteMessages.updateSettings(this)"\n${settings.confirm && "checked" || ""} />confirm delete?</label>`;
-        }
-
-        static updateSettings({
-            name,
-            checked
-        }) {
-            settings[name] = checked;
-            BdApi.saveData("QuickDeleteMessages", name, checked);
-        }
-
     };
 
-    settings = Object.create(null);
+    return (window.Lightcord || window.LightCord) ? class {
+        getName() { return config.info.name; }
+        getAuthor() { return config.info.author; }
+        getVersion() { return config.info.version; }
+        getDescription() { return "Do not use LightCord!"; }
+        load() { BdApi.alert("Attention!", "By using LightCord you are risking your Discord Account, due to using a 3rd Party Client. Switch to an official Discord Client (https://discord.com/) with the proper BD Injection (https://betterdiscord.app/)"); }
+        start() { }
+        stop() { }
+    } : !window.BDFDB_Global || (!window.BDFDB_Global.loaded && !window.BDFDB_Global.started) ? class {
+        getName() { return config.info.name; }
+        getAuthor() { return config.info.author; }
+        getVersion() { return config.info.version; }
+        getDescription() { return `The Library Plugin needed for ${config.info.name} is missing. Open the Plugin Settings to download it. \n\n${config.info.description}`; }
 
-    Permissions = UserStore = EndpointMessages = MessagePrompts = null;
-
-    _qualifies = ".message-2qnXI6, .cozyMessage-3V1Y8y";
-
-    IsKeyBeingPressed = (key) => keysBeingPressed.indexOf(key) > -1;
-
-    onClick = function (event) {
-        var channel,
-        element,
-        message,
-        shiftKey;
-        if (!(IsKeyBeingPressed("Delete") || "darwin" === process.platform && IsKeyBeingPressed("Backspace"))) {
-            return;
+        downloadLibrary() {
+            require("request").get("https://mwittrien.github.io/BetterDiscordAddons/Library/0BDFDB.plugin.js", (e, r, b) => {
+                if (!e && b && r.statusCode == 200) require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0BDFDB.plugin.js"), b, _ => BdApi.showToast("Finished downloading BDFDB Library", { type: "success" }));
+                else BdApi.alert("Error", "Could not download BDFDB Library Plugin. Try again later or download it manually from GitHub: https://mwittrien.github.io/downloader/?library");
+            });
         }
-        ({
-            path: [element],
-            shiftKey
-        } = event);
-        if (!(element.matches(_qualifies) || (element = element.closest(_qualifies)))) {
-            return;
-        }
-        ({
-            memoizedProps: {
-                children: {
-                    1: {
-                        props: {
-                            channel,
-                            message
-                        }
+
+        load() {
+            if (!window.BDFDB_Global || !Array.isArray(window.BDFDB_Global.pluginQueue)) window.BDFDB_Global = Object.assign({}, window.BDFDB_Global, { pluginQueue: [] });
+            if (!window.BDFDB_Global.downloadModal) {
+                window.BDFDB_Global.downloadModal = true;
+                BdApi.showConfirmationModal("Library Missing", `The Library Plugin needed for ${config.info.name} is missing. Please click "Download Now" to install it.`, {
+                    confirmText: "Download Now",
+                    cancelText: "Cancel",
+                    onCancel: _ => { delete window.BDFDB_Global.downloadModal; },
+                    onConfirm: _ => {
+                        delete window.BDFDB_Global.downloadModal;
+                        this.downloadLibrary();
                     }
-                }
+                });
             }
-        } = BdApi.getInternalInstance(element));
-        if (!gotDeletePermission(channel, message))
-            return;
-			
-        if (settings.confirm && !shiftKey)
-            MessagePrompts.confirmDelete(channel, message, false);
-        else
-            EndpointMessages.deleteMessage(channel.id, message.id, false);
-		
-        event.preventDefault();
-        event.stopImmediatePropagation();
-    };
+            if (!window.BDFDB_Global.pluginQueue.includes(config.info.name)) window.BDFDB_Global.pluginQueue.push(config.info.name);
+        }
+        start() { this.load(); }
+        stop() { }
+        getSettingsPanel() {
+            let template = document.createElement("template");
+            template.innerHTML = `<div style="color: var(--header-primary); font-size: 16px; font-weight: 300; white-space: pre; line-height: 22px;">The Library Plugin needed for ${config.info.name} is missing.\nPlease click <a style="font-weight: 500;">Download Now</a> to install it.</div>`;
+            template.content.firstElementChild.querySelector("a").addEventListener("click", this.downloadLibrary);
+            return template.content.firstElementChild;
+        }
+    } : (([Plugin, BDFDB]) => {
+        return class QuickDeleteMessages extends Plugin {
+            onLoad() {
+                this.defaults = {
+                    general: {
+                        confirmDelete: { value: true, description: "Confirm Delete" }
+                    }
+                };
+            }
 
-    gotDeletePermission = function (channel, message) {
-        var self;
-        self = UserStore.getCurrentUser();
-        return self === message.author || 0x2000 & Permissions.computePermissions(self, channel);
-    };
+            onStart() {
+                window._BDFDB = BDFDB;
 
-    return QuickDeleteMessages;
-}
-.call(this);
+                BDFDB.ListenerUtils.add(this, document, "keydown", event => {
+                    if (event.keyCode != BDFDB.LibraryModules.KeyEvents("delete") || !BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement))
+                        return;
+
+                    let messageInternalInstance = BdApi.getInternalInstance(BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement));
+                    let messageInfo = messageInternalInstance.memoizedProps.children[3].props;
+
+                    if (!BDFDB.DiscordConstants.MessageTypesDeletable[messageInfo.message.type])
+                        return;
+
+                    if (messageInfo.message.author.id != BDFDB.UserUtils.me.id && !BDFDB.UserUtils.can("MANAGE_MESSAGES", BDFDB.UserUtils.me.id, messageInfo.channel.id))
+                        return;
+
+                    if (this.settings.general["confirmDelete"])
+                        BDFDB.ModuleUtils.findByProperties("confirmDelete").confirmDelete(messageInfo.channel, messageInfo.message, false);
+                    else
+                        BDFDB.LibraryModules.MessageUtils.deleteMessage(messageInfo.channel.id, messageInfo.message.id, messageInfo.message.state != BDFDB.DiscordConstants.MessageStates.SENT);
+                });
+
+                BDFDB.PatchUtils.forceAllUpdates(this);
+            }
+
+            onStop() {
+                BDFDB.PatchUtils.forceAllUpdates(this);
+            }
+
+            getSettingsPanel(collapseStates = {}) {
+                let settingsPanel;
+                return settingsPanel = BDFDB.PluginUtils.createSettingsPanel(this, {
+                    collapseStates: collapseStates,
+                    children: _ => {
+                        let settingsItems = [];
+
+                        for (let key in this.defaults.general) settingsItems.push(BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.SettingsSaveItem, {
+                            type: "Switch",
+                            plugin: this,
+                            keys: ["general", key],
+                            label: this.defaults.general[key].description,
+                            value: this.settings.general[key]
+                        }));
+
+                        return settingsItems;
+                    }
+                });
+            }
+        };
+    })(window.BDFDB_Global.PluginUtils.buildPlugin(config));
+})();
