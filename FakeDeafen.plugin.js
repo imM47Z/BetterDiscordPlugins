@@ -2,9 +2,9 @@
     * @name FakeDeafen
     * @author M47Z
     * @description This plugin allows you to fake deafen/mute in voice chat.
-    * @version 1.0.0
+    * @version 1.0.1
     * @source https://github.com/IamM47Z/BetterDiscordPlugins/blob/master/FakeDeafen.plugin.js
-    * @updateUrl https://raw.githubusercontent.com/IamM47Z/BetterDiscordPlugins/master/FakeDeafen.plugin.js
+    * @updateUrl https://gitcdn.link/repo/IamM47Z/BetterDiscordPlugins/master/FakeDeafen.plugin.js
     */
 /*@cc_on
 @if (@_jscript)
