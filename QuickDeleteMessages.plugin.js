@@ -73,26 +73,34 @@ module.exports = (_ => {
             }
 
             onStart() {
-               BDFDB.ListenerUtils.add(this, document, "keydown", event => {
-                    if (event.keyCode != BDFDB.LibraryModules.KeyEvents("delete") || !BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement))
+                let MessageUtils = BDFDB.ModuleUtils.findByProperties("confirmDelete");
+
+                BDFDB.ListenerUtils.add(this, document, "keydown", event => {
+                    if (event.keyCode != BDFDB.LibraryModules.KeyEvents("delete") ||
+                        (process.platform == "darwin" && event.keyCode != BDFDB.LibraryModules.KeyEvents("escape")))
                         return;
 
-                    let messageInternalInstance = BdApi.getInternalInstance(BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement));
-                    let messageInfo = messageInternalInstance.memoizedProps.children[3].props;
+                    let messageElem = BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement);
+                    if (!messageElem)
+                        return;
 
-                    if (!BDFDB.DiscordConstants.MessageTypesDeletable[messageInfo.message.type])
+                    let messageInfo = BdApi.getInternalInstance(messageElem);
+                    if (!messageInfo)
+                        return;
+
+                    messageInfo = messageInfo.memoizedProps.children[3].props;
+
+                    if (!BDFDB.DiscordConstants.MessageTypesDeletable[messageInfo.message.type] || !messageElem.querySelector(".messageContent-2qWWxC"))
                         return;
 
                     if (messageInfo.message.author.id != BDFDB.UserUtils.me.id && !BDFDB.UserUtils.can("MANAGE_MESSAGES", BDFDB.UserUtils.me.id, messageInfo.channel.id))
                         return;
 
-                    if (this.settings.general["confirmDelete"])
-                        BDFDB.ModuleUtils.findByProperties("confirmDelete").confirmDelete(messageInfo.channel, messageInfo.message, false);
+                    if (this.settings.general["confirmDelete"] || BDFDB.ListenerUtils.isPressed(BDFDB.LibraryModules.KeyEvents("shift")))
+                        MessageUtils.confirmDelete(messageInfo.channel, messageInfo.message, false);
                     else
                         BDFDB.LibraryModules.MessageUtils.deleteMessage(messageInfo.channel.id, messageInfo.message.id, messageInfo.message.state != BDFDB.DiscordConstants.MessageStates.SENT);
                 });
-
-                BDFDB.PatchUtils.forceAllUpdates(this);
             }
 
             onStop() {
