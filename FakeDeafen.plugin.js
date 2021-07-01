@@ -34,7 +34,7 @@ module.exports = (_ => {
         "info": {
             "name": "FakeDeafenToggle",
             "author": "M47Z",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "description": "This plugin allows you to fake deafen/mute in voice chat."
         }
     };
