@@ -73,9 +73,7 @@ module.exports = (_ => {
             }
 
             onStart() {
-                window._BDFDB = BDFDB;
-
-                BDFDB.ListenerUtils.add(this, document, "keydown", event => {
+               BDFDB.ListenerUtils.add(this, document, "keydown", event => {
                     if (event.keyCode != BDFDB.LibraryModules.KeyEvents("delete") || !BDFDB.DOMUtils.getParent(BDFDB.dotCN.message, document.activeElement))
                         return;
 
