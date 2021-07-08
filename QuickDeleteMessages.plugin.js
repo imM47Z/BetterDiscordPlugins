@@ -32,7 +32,7 @@
 @else@*/
 
 module.exports = (() => {
-    const config = {"info":{"name":"QuickDeleteMessages","authors":[{"name":"M47Z","discord_id":"398917073444798466","github_username":"IamM47Z"}],"version":"1.0.0","description":"This plugin allows you to delete messages by pressing delete button.","github":"https://github.com/IamM47Z/BetterDiscordPlugins/blob/master/QuickDeleteMessages.plugin.js","github_raw":"https://raw.githubusercontent.com/IamM47Z/BetterDiscordPlugins/master/QuickDeleteMessages.plugin.js"},"changelog":[{"title":"New Stuff","type":"improved","items":["BDFDB Api Removed"]},{"title":"On-going","type":"progress","items":["Avoid Discord Rate-Limit (possible adjustable cooldown)"]}],"defaultConfig":[{"type":"switch","id":"confirmDelete","name":"Confirm Delete","note":"Show Confirm Popup when attempting to Delete Messages","value":true}],"main":"index.js"};
+    const config = {"info":{"name":"QuickDeleteMessages","authors":[{"name":"M47Z","discord_id":"398917073444798466","github_username":"IamM47Z"}],"version":"1.0.1","description":"This plugin allows you to delete messages by pressing delete button.","github":"https://github.com/IamM47Z/BetterDiscordPlugins/blob/master/QuickDeleteMessages.plugin.js","github_raw":"https://raw.githubusercontent.com/IamM47Z/BetterDiscordPlugins/master/QuickDeleteMessages.plugin.js"},"changelog":[{"title":"New Stuff","type":"improved","items":["Not using hardcoded constants and fixed issue with missing perms"]},{"title":"On-going","type":"progress","items":["Avoid Discord Rate-Limit (possible adjustable cooldown)"]}],"defaultConfig":[{"type":"switch","id":"confirmDelete","name":"Confirm Delete","note":"Show Confirm Popup when attempting to Delete Messages","value":true}],"main":"index.js"};
 
     return !global.ZeresPluginLibrary ? class {
         constructor() {this._config = config;}
@@ -61,6 +61,7 @@ module.exports = (() => {
     let _this;
     let MessageUtils;
     let mouseX, mouseY;
+    let MessageClassNames = [];
 
     return class QuickDeleteMessages extends Plugin {
         onMouseMove(event) {
@@ -75,21 +76,20 @@ module.exports = (() => {
             let targetElem = document.elementFromPoint(mouseX, mouseY);
             if (!targetElem)
                 return;
-
-            let messageElem = targetElem.className.includes("message-2qnXI6") ? targetElem : DOMTools.parents(targetElem, ".message-2qnXI6")[0];
+                
+            let messageElem = targetElem.className.includes(MessageClassNames[0].message) ? targetElem : DOMTools.parents(targetElem, "." + MessageClassNames[0].message)[0];
             if (!messageElem)
                 return;
 
             let messageInfo = BdApi.getInternalInstance(messageElem);
             if (!messageInfo)
                 return;
-
             messageInfo = messageInfo.memoizedProps.children[3].props;
-
-            if (!DiscordModules.DiscordConstants.MessageTypesDeletable[messageInfo.message.type] || !messageElem.querySelector(".messageContent-2qWWxC"))
+            
+            if (!DiscordModules.DiscordConstants.MessageTypesDeletable[messageInfo.message.type] || !messageElem.querySelector("." + MessageClassNames[1].messageContent))
                 return;
 
-            if (messageInfo.message.author.id != DiscordAPI.currentUser.id && !DiscordModules.Permissions.can("MANAGE_MESSAGES", DiscordAPI.currentUser.id, messageInfo.channel.id))
+            if (messageInfo.message.author.id != DiscordAPI.currentUser.id && !DiscordModules.Permissions.can({data: 8192n}, DiscordAPI.currentUser.id, messageInfo.channel))
                 return;
 
             if (!event.shiftKey && _this.settings["confirmDelete"])
@@ -102,6 +102,8 @@ module.exports = (() => {
             _this = this;
 
             MessageUtils = WebpackModules.getByProps("confirmDelete");
+            MessageClassNames[0] = WebpackModules.getByProps("message", "cozyMessage");
+            MessageClassNames[1] = WebpackModules.getByProps("messageContent", "hasReply");
 
             document.addEventListener("keydown", this.onKeyDown);
             document.addEventListener("mousemove", this.onMouseMove);
